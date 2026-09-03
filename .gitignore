@@ -1,0 +1,63 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Test, coverage, and type-checking artifacts
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter temporary files
+.ipynb_checkpoints/
+
+# Local environment variables and secrets
+.env
+.env.*
+!.env.example
+config.local.yml
+config.*.local.yml
+*.pem
+*.key
+secrets/
+
+# Runtime logs and generated reports
+*.log
+/output_report_*.md
+
+# Editor and tooling files
+.idea/
+.vscode/
+*.swp
+*.swo
