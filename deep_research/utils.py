@@ -25,6 +25,27 @@ def get_current_dir() -> Path:
 
 # ===== CONFIG LOADER =====
 
+
+def resolve_config_path(config_path=None):
+    """解析配置文件路径。
+
+    显式传入的路径和 CONFIG_PATH 环境变量优先；否则优先使用未纳入版本控制的
+    config.local.yml，便于本地保存 API Key。没有本地配置时回退到模板 config.yml。
+    """
+    if config_path:
+        return str(config_path)
+
+    env_path = os.environ.get("CONFIG_PATH")
+    if env_path:
+        return env_path
+
+    local_path = Path("config.local.yml")
+    if local_path.is_file():
+        return str(local_path)
+
+    return "config.yml"
+
+
 def get_config_yml(path, section_name, subsection_name=None):
     """读取yaml文件"""
     if not os.path.isfile(path):
@@ -46,6 +67,7 @@ def get_config_yml(path, section_name, subsection_name=None):
 
 def load_config(stage_name=None, config_path=None):
     """加载配置"""
+    config_path = resolve_config_path(config_path)
     return get_config_yml(
         path=config_path, section_name="stages", subsection_name=stage_name
     )

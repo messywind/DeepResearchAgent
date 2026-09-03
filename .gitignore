@@ -46,7 +46,9 @@ htmlcov/
 .env
 .env.*
 !.env.example
+# Project-local configuration files may contain API keys
 config.local.yml
+config.local.yaml
 config.*.local.yml
 *.pem
 *.key

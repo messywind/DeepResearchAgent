@@ -23,14 +23,14 @@ from langgraph.types import Command
 from deep_research import logging as dr_logging
 from deep_research.llm import get_chat_model
 from deep_research.prompts import RESEARCH_BRIEF_PROMPT, DRAFT_REPORT_PROMPT  
-from deep_research.states import AgentState, ResearchQuestion, AgentInputState, DraftReport
+from deep_research.states import AgentState, ResearchQuestion, AgentInputState
 from deep_research.utils import get_today_str 
 
 logger = dr_logging.get_logger(__name__)
 
 
 # 初始化模型 
-draft_model = get_chat_model("draft")
+draft_model = get_chat_model("draft", max_tokens=2048)
 
 
 # ===== Langgraph的节点 =====
@@ -38,6 +38,7 @@ draft_model = get_chat_model("draft")
 def write_research_brief(state: AgentState) -> Command[Literal["write_draft_report"]]:
     """根据用户的query生成一个研究提纲，内容包含需要调研哪些方面，注意事项等等"""
 
+    logger.info("[DRAFT] requesting research brief")
     logger.debug(
         "write research_brief invoked with %d messages", len(state.get("messages", []))
     )
@@ -63,6 +64,7 @@ def write_research_brief(state: AgentState) -> Command[Literal["write_draft_repo
 def write_draft_report(state: AgentState) -> Command[Literal["__end__"]]:
     """根据提纲生成一个研究报告的草稿"""
 
+    logger.info("[DRAFT] requesting draft report (this may take a while for long reports)")
     logger.debug(
         "write_draft_report invoked with research_brief present=%s",
         bool(state.get("research_brief")),
@@ -75,15 +77,16 @@ def write_draft_report(state: AgentState) -> Command[Literal["__end__"]]:
         date=get_today_str()
     )
 
-    # 结构化输出
-    structured_output_model = draft_model.with_structured_output(DraftReport)
-    response = structured_output_model.invoke([HumanMessage(content=draft_report_prompt)])
-    logger.debug("write_draft_report produced draft_report length=%d", len(response.draft_report))
+    # 长篇报告在部分 OpenAI-compatible 网关上使用 response_format 会长时间等待。
+    # 这里使用普通文本响应，保留 Markdown 报告内容即可。
+    response = draft_model.invoke([HumanMessage(content=draft_report_prompt)])
+    draft_report = response.content if isinstance(response.content, str) else str(response.content)
+    logger.debug("write_draft_report produced draft_report length=%d", len(draft_report))
 
     return {
         "research_brief": research_brief,
-        "draft_report": response.draft_report, 
-        "supervisor_messages": ["Here is the draft report: " + response.draft_report, research_brief]
+        "draft_report": draft_report,
+        "supervisor_messages": ["Here is the draft report: " + draft_report, research_brief]
     }
 
 
@@ -118,4 +121,3 @@ if __name__ == "__main__":
 
     print("=====  Draft Report ====")
     console.print(Markdown(result["draft_report"]))
-

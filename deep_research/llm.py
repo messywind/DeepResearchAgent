@@ -10,7 +10,7 @@ import os
 from typing import Any, Dict, Optional
 from langchain.chat_models import init_chat_model
 
-from deep_research.utils import load_config
+from deep_research.utils import load_config, resolve_config_path
 from deep_research import logging as dr_logging
 
 
@@ -36,7 +36,8 @@ def _load_stage_config(stage_name: str | None, config_path: str | None) -> Dict[
     """加载config.yml"""
 
     # Key作为config loader的唯一标识
-    cache_key = (os.environ.get("CONFIG_PATH", "config.yml"), stage_name, id(load_config))
+    resolved_config_path = resolve_config_path(config_path)
+    cache_key = (resolved_config_path, stage_name, id(load_config))
 
     if cache_key in _CONFIG_CACHE:
         return _CONFIG_CACHE[cache_key]
@@ -69,6 +70,14 @@ def _build_openai_kwargs(
     for key in ("api_key", "base_url", "organization"):
         if api_cfg.get(key):
             kwargs[key] = api_cfg[key]
+
+    # 部分 OpenAI-compatible 网关会拦截 openai-python 默认的 User-Agent。
+    # 允许在 config.local.yml 中覆盖请求头，同时不影响官方 OpenAI 接口。
+    default_headers = api_cfg.get("default_headers")
+    if isinstance(default_headers, dict) and default_headers:
+        kwargs["default_headers"] = {
+            str(header): str(value) for header, value in default_headers.items()
+        }
 
     # 温度系数
     if api_cfg.get("temperature") is not None:
@@ -133,7 +142,7 @@ def get_chat_model(role: str, *, stage: str | None = None, max_tokens: int | Non
     """
 
     # 获取config路径
-    config_path = os.environ.get("CONFIG_PATH", "config.yml")
+    config_path = resolve_config_path()
     resolved_stage = _resolve_stage(stage)
 
     # 加载config.yam

@@ -3,7 +3,8 @@ stages:
     cognition:
       openai:
         base_url: http://xxx 
-        api_key: sk-xxxx
+        # 本地运行时请在 config.local.yml 填写真实密钥，不要修改或提交此模板。
+        api_key: ""
         organization: dingshixiong
         default_model: gpt-5.4-mini
         temperature: 0
@@ -14,7 +15,8 @@ stages:
     search:
       backend: tavily
       tavily:
-        api_key: tvly-dev-xxxx
+        # 本地运行时请在 config.local.yml 填写真实密钥，不要修改或提交此模板。
+        api_key: ""
         base_url: https://api.tavily.com
         max_results: 3
         topic: general

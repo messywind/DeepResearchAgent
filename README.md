@@ -174,13 +174,15 @@ pip install -r requirements.txt
 
 ### 2. 配置模型和搜索服务
 
-编辑 [`config.yml`](config.yml)，配置：
+复制 [`config.yml`](config.yml) 为 `config.local.yml`，只在本地配置：
 
 - OpenAI-compatible API 的 `base_url`、`api_key` 和模型名称。
 - Tavily 的 `api_key` 和搜索参数。
 - 各个 Agent 角色对应的模型。
 
-不要将真实密钥提交到 Git 仓库。生产环境建议将敏感配置迁移到环境变量或密钥管理服务。
+`config.local.yml` 已加入 `.gitignore`，不会被提交到 Git 仓库。程序在未设置
+`CONFIG_PATH` 时会优先读取该本地文件；如需使用其他路径，可设置 `CONFIG_PATH` 环境变量。
+不要将真实密钥写入或提交 [`config.yml`](config.yml)。生产环境建议将敏感配置迁移到环境变量或密钥管理服务。
 
 如果使用 LangSmith 追踪，可参考 [`env.example`](env.example) 配置环境变量。
 
