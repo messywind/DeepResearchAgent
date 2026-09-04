@@ -58,6 +58,8 @@
 | Q002 | `agent_builder` 的顶层编排职责 | verified | [问题记录](questions/Q002-agent-builder-orchestration.md) |
 | Q003 | `AgentState` 的共享状态与合并规则 | learning | [问题记录](questions/Q003-agent-state.md) |
 | Q004 | 用户问题如何变成研究简报和报告初稿 | learning | [问题记录](questions/Q004-brief-to-draft.md) |
+| Q005 | Supervisor 的决策—执行循环 | learning | [问题记录](questions/Q005-supervisor-loop.md) |
+| Q006 | 学习讲解方式调整 | verified | [问题记录](questions/Q006-teaching-format.md) |
 
 ## 当前阶段结论
 
