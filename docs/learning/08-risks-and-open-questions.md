@@ -14,6 +14,7 @@
 - 缺少测试目录、锁定依赖文件和正式打包入口，复现成本较高。
 - `InMemorySaver` 只适合示例/开发测试，重启进程后线程状态不会保留。
 - 当前没有正式 HTTP API 或 CLI，生产化还需要入口、持久化、监控、重试和鉴权。
+- `raw_notes` 目前是「只写不读」字段：researcher 的 `compress_research` 生成、supervisor_tools 用 `operator.add` 聚合累积，但全项目没有任何下游节点读取它（最终报告和草稿都走 `notes`/`compressed_research` 链路）。同时四处 `.compile()` 均未配置 checkpointer，状态只存在于单次运行的进程内存中，不落盘、不入库，中断即丢失。因此「留档/可追溯」的设计意图尚未兑现。待决策：(a) 接上持久化与消费点让其真正可回溯；(b) 若无消费需求则精简掉，以节省内存和上下文。
 
 ## 排错优先级
 

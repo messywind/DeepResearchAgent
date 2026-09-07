@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepResearchAgent · LangGraph 学习流程图</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#0e1320; --panel:#161d2e; --panel-2:#1b2540; --ink:#e9eef8; --dim:#93a0bd;
+    --line:#2a3656;
+    --accent:#6ea8fe;
+    --brief:#f5a623; --draft:#7b8cff; --sup:#4dd0a7; --research:#ff7ac0;
+    --redteam:#ff6b6b; --eval:#c084fc; --final:#38d9a9; --tool:#ffd166;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(900px 500px at 50% -8%, #1a2540 0%, transparent 60%), var(--bg);
+    color:var(--ink); font-family:var(--sans); line-height:1.55;
+  }
+  /* narrow, centered reading column */
+  .page{max-width:720px; margin:0 auto; padding:30px 20px 90px}
+  header h1{font-size:22px; margin:0 0 6px}
+  header h1 span{color:var(--accent)}
+  header p{color:var(--dim); font-size:13.5px; margin:6px 0}
+  code{font-family:var(--mono); background:var(--panel-2); padding:1px 6px; border-radius:5px; color:#cfe0ff; font-size:12px}
+
+  .legend{display:flex; flex-wrap:wrap; gap:10px 14px; margin:16px 0 4px; font-size:12px}
+  .legend .item{display:flex; align-items:center; gap:6px; color:var(--dim)}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .sec{margin:30px 0 6px}
+  .sec .st{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sec .st h2{font-size:16px; margin:0}
+  .sec .st .file{font-family:var(--mono); font-size:11px; color:var(--dim)}
+  .sec .schema{font-family:var(--mono); font-size:11px; color:var(--accent); background:var(--panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:5px 10px; margin:8px 0 4px; display:inline-block}
+
+  /* vertical flow */
+  .vflow{display:flex; flex-direction:column; align-items:center; margin:14px 0}
+  .vnode{
+    width:100%; max-width:420px; background:var(--panel); border:1.5px solid var(--line);
+    border-left-width:5px; border-radius:12px; padding:12px 15px; cursor:pointer;
+    transition:transform .12s, box-shadow .12s, border-color .12s; position:relative;
+  }
+  .vnode:hover{transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.35); border-top-color:var(--accent); border-right-color:var(--accent); border-bottom-color:var(--accent)}
+  .vnode .kk{font-family:var(--mono); font-size:10px; letter-spacing:.4px; text-transform:uppercase}
+  .vnode .tt{font-size:15px; font-weight:650; margin:3px 0 4px; font-family:var(--mono)}
+  .vnode .dd{font-size:12px; color:var(--dim)}
+  .vnode .more{position:absolute; right:12px; top:12px; font-size:11px; color:var(--accent); opacity:.75}
+  .vnode .more::after{content:"查看 state ▸"}
+
+  .conn{height:30px; width:2px; background:linear-gradient(var(--line),var(--line)); position:relative}
+  .conn::after{content:""; position:absolute; bottom:0; left:-4px; border:5px solid transparent; border-top-color:var(--line)}
+  .conn .cl{position:absolute; left:12px; top:50%; transform:translateY(-50%); white-space:nowrap;
+    font-family:var(--mono); font-size:10px; color:var(--dim)}
+
+  .term{font-family:var(--mono); font-size:11px; font-weight:700; color:#0b0f1a; background:var(--accent);
+    border-radius:20px; padding:5px 16px}
+
+  /* parallel fan */
+  .fan{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; width:100%; max-width:460px}
+  .mini{flex:1; min-width:120px; background:var(--panel); border:1.5px dashed var(--research);
+    border-radius:11px; padding:10px 11px; cursor:pointer; transition:transform .12s}
+  .mini:hover{transform:translateY(-2px)}
+  .mini .mk{font-family:var(--mono); font-size:9.5px; color:var(--research); text-transform:uppercase}
+  .mini .mt{font-size:12px; font-weight:600; margin-top:3px}
+  .mini.ell{border-style:solid; border-color:var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:22px; letter-spacing:2px; color:var(--dim); cursor:default; min-width:64px; flex:0 0 64px}
+  .fanhint{font-family:var(--mono); font-size:10.5px; color:var(--dim); margin:8px 0}
+
+  .subgraph{border:1.5px dashed var(--sup); border-radius:16px; padding:16px 14px 10px; margin:10px 0; position:relative;
+    background:linear-gradient(180deg, rgba(77,208,167,.05), transparent)}
+  .subgraph.research{border-color:var(--research); background:linear-gradient(180deg, rgba(255,122,192,.05), transparent)}
+  .subgraph .sglab{position:absolute; top:-11px; left:16px; font-family:var(--mono); font-size:10.5px;
+    padding:2px 10px; border-radius:20px; background:var(--bg); border:1px solid var(--sup); color:var(--sup)}
+  .subgraph.research .sglab{border-color:var(--research); color:var(--research)}
+  .note{font-family:var(--mono); font-size:10.5px; color:var(--dim); text-align:center; margin:6px 0 12px}
+
+  .branches{border:1px solid var(--line); border-radius:11px; padding:12px 14px; margin:12px auto 2px; max-width:460px; background:var(--panel)}
+  .branches h5{margin:0 0 8px; font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; font-family:var(--mono)}
+  .branches .b{font-size:12px; margin:6px 0; color:var(--ink)}
+  .branches .b code{font-size:11px}
+  .branches .b .g{color:var(--sup)} .branches .b .r{color:var(--redteam)} .branches .b .e{color:var(--eval)} .branches .b .p{color:var(--research)}
+
+  /* ===== modal ===== */
+  .overlay{position:fixed; inset:0; background:rgba(4,7,14,.74); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:80; padding:22px}
+  .overlay.open{display:flex}
+  .modal{width:min(1060px,96vw); max-height:94vh; overflow:auto; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px; box-shadow:0 24px 70px rgba(0,0,0,.6)}
+  .io2{display:grid; grid-template-columns:1fr 1fr; gap:20px}
+  @media(max-width:800px){ .io2{grid-template-columns:1fr} }
+  .modal .mh{position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:11px; padding:15px 18px;
+    border-bottom:1px solid var(--line); background:var(--panel-2)}
+  .modal .mh .chip{width:13px;height:13px;border-radius:4px; flex:none}
+  .modal .mh h3{margin:0; font-size:15px; font-family:var(--mono)}
+  .modal .mh .fp{font-family:var(--mono); font-size:10.5px; color:var(--dim); margin-left:auto}
+  .modal .mh .x{cursor:pointer; font-size:20px; color:var(--dim); line-height:1; padding:0 2px}
+  .modal .mh .x:hover{color:var(--ink)}
+  .modal .mb{padding:16px 18px 20px}
+  .role{font-size:13px; color:var(--ink); background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:11px 13px; margin-bottom:16px}
+  .role .accent{color:var(--accent)}
+
+  .blk{margin:16px 0 0}
+  .blk .bt{display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:12px; font-weight:650}
+  .blk .bt .pin{font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:12px; border:1px solid}
+  .pin.in{color:#7ee3b0; border-color:#2f5c48} .pin.out{color:#ffd08a; border-color:#5c4a2f}
+  .blk .bt .sub{color:var(--dim); font-weight:400; font-size:11px}
+
+  table.st{width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:10px}
+  table.st th{text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.4px; color:var(--dim);
+    font-weight:600; padding:5px 8px; border-bottom:1px solid var(--line)}
+  table.st td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+  table.st td.f{font-family:var(--mono); color:#cfe0ff; white-space:nowrap}
+  table.st td.ty{font-family:var(--mono); color:#9fb4d8; font-size:10.5px}
+  .rd{font-family:var(--mono); font-size:10px; padding:1px 7px; border-radius:11px; white-space:nowrap; border:1px solid}
+  .rd.add{color:#7ee3b0; border-color:#2f5c48; background:rgba(126,227,176,.08)}
+  .rd.msg{color:#7dd3fc; border-color:#2c5570; background:rgba(125,211,252,.08)}
+  .rd.last{color:#c4b5fd; border-color:#463c6b; background:rgba(196,181,253,.07)}
+  .rd.so{color:#fbbf24; border-color:#5c4a2f; background:rgba(251,191,36,.07)}
+
+  pre.code{margin:6px 0 0; background:#0a0e18; border:1px solid var(--line); border-radius:10px;
+    padding:12px 13px; font-family:var(--mono); font-size:11px; line-height:1.6;
+    color:#d7e2f7; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere}
+  .tokk{color:#7dd3fc} .toks{color:#fca5a5} .tokn{color:#fbbf24} .tokc{color:#64748b;font-style:italic} .tokb{color:#c4b5fd}
+
+  .redkey{margin-top:26px; border-top:1px dashed var(--line); padding-top:14px}
+  .redkey h4{font-size:12px; margin:0 0 10px; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; font-family:var(--mono)}
+  .redkey .rrow{display:flex; align-items:flex-start; gap:10px; font-size:12px; margin:8px 0; color:var(--dim)}
+  .redkey .rrow .rd{margin-top:1px}
+  .foot{color:var(--dim); font-size:11.5px; margin-top:22px}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1><span>DeepResearchAgent</span> · LangGraph 学习流程图</h1>
+    <p>自上而下阅读：<code>简报 → 草稿 → Supervisor 监督研究 → 终稿</code>。点开任一节点，会弹出它读取 / 写回的 <b>Agent State</b>、每个字段的 <b>reducer</b>，以及一条真实示例数据。</p>
+    <p>示例研究请求：<i>「帮我写一个关于英伟达最新 GPU 的调研报告」</i></p>
+    <div class="legend">
+      <span class="item"><i class="dot" style="background:var(--brief)"></i>简报</span>
+      <span class="item"><i class="dot" style="background:var(--draft)"></i>草稿</span>
+      <span class="item"><i class="dot" style="background:var(--sup)"></i>Supervisor</span>
+      <span class="item"><i class="dot" style="background:var(--research)"></i>Research 子 Agent</span>
+      <span class="item"><i class="dot" style="background:var(--eval)"></i>Evaluator</span>
+      <span class="item"><i class="dot" style="background:var(--redteam)"></i>Red Team</span>
+      <span class="item"><i class="dot" style="background:var(--final)"></i>终稿</span>
+    </div>
+  </header>
+
+  <!-- ① TOP -->
+  <div class="sec">
+    <div class="st"><h2>① 顶层工作流</h2><span class="file">agent_builder.py</span></div>
+    <span class="schema">StateGraph(AgentState, input_schema=AgentInputState)</span>
+  </div>
+  <div class="vflow" id="flow-top"></div>
+
+  <!-- ② SUPERVISOR -->
+  <div class="sec">
+    <div class="st"><h2>② Supervisor 子图</h2><span class="file">supervisor.py</span></div>
+    <span class="schema">StateGraph(SupervisorState)</span>
+  </div>
+  <div class="subgraph">
+    <span class="sglab">supervisor_subgraph · SupervisorState</span>
+    <div class="note">循环上限 max_iterations=15 · 最大并行子 Agent=3 · 修复阈值 score&lt;6.0</div>
+    <div class="vflow" id="flow-sup"></div>
+    <div class="branches">
+      <h5>supervisor_tools 的条件跳转 (Command.goto)</h5>
+      <div class="b">① <code>think_tool</code> <span class="g">→ 回到 supervisor</span>（记录反思）</div>
+      <div class="b">② <code>ConductResearch</code> <span class="p">→ 并行 Research 子 Agent ……</span> → supervisor</div>
+      <div class="b">③ <code>refine_draft_report</code> <span class="e">→ Evaluator 打分</span> <span class="r">→ red_team</span> → supervisor</div>
+      <div class="b">④ <code>ResearchComplete</code> / 迭代≥15 <span style="color:var(--accent)">→ END</span>（回写 notes）</div>
+    </div>
+  </div>
+
+  <!-- ③ RESEARCH -->
+  <div class="sec">
+    <div class="st"><h2>③ Research 子 Agent（由 ConductResearch 并行派生）</h2><span class="file">research_agent.py</span></div>
+    <span class="schema">StateGraph(ResearcherState, output_schema=ResearcherOutputState)</span>
+  </div>
+  <div class="subgraph research">
+    <span class="sglab">researcher_agent ×N（并行）</span>
+    <div class="fan" id="fan-res"></div>
+    <div class="fanhint">↑ Supervisor 用 asyncio.gather 并行启动多个（≤3）子 Agent，每个持有独立上下文，主题各不相同，其余同理 ……</div>
+    <div class="note">每个子 Agent 内部结构（点击查看 state）：</div>
+    <div class="vflow" id="flow-res"></div>
+    <div class="branches">
+      <h5>should_continue 条件路由</h5>
+      <div class="b">最近消息含 <code>tool_calls</code> <span class="p">→ tool_node</span>（继续搜索，循环）</div>
+      <div class="b">无 <code>tool_calls</code> <span class="g">→ compress_research</span>（压缩收尾 → END）</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    提示：<span class="rd msg">add_messages</span> 消息累加 ·
+    <span class="rd add">operator.add</span> 列表追加合并 ·
+    <span class="rd last">LastValue</span> 覆盖（默认，后写覆盖前值）·
+    <span class="rd so">结构化输出</span> Pydantic 模型字段，非图状态。
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* ---------- reducer lookup ---------- */
+const REDUCERS={
+  messages:['msg','add_messages'], supervisor_messages:['msg','add_messages'], researcher_messages:['msg','add_messages'],
+  notes:['add','operator.add'], raw_notes:['add','operator.add'],
+  active_critiques:['add','operator.add'], quality_history:['add','operator.add'],
+  research_brief:['last','LastValue'], draft_report:['last','LastValue'], final_report:['last','LastValue'],
+  research_iterations:['last','LastValue'], critique_nums:['last','LastValue'], needs_quality_repair:['last','LastValue'],
+  compressed_research:['last','LastValue'], research_topic:['last','LastValue'], tool_call_iterations:['last','LastValue'],
+  comprehensiveness_score:['so','结构化输出'], accuracy_score:['so','结构化输出'], coherence_score:['so','结构化输出'], reason:['so','结构化输出']
+};
+function reducerBadge(field){
+  const base=field.split(/[\[\.\s(]/)[0];
+  const r=REDUCERS[base];
+  if(!r) return '<span class="rd last">—</span>';
+  return `<span class="rd ${r[0]}">${r[1]}</span>`;
+}
+
+/* ---------- json highlighter ---------- */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(code){
+  let o=esc(code);
+  o=o.replace(/(^|\n)(\s*)(\/\/[^\n]*)/g,(m,a,b,c)=>a+b+'<span class="tokc">'+c+'</span>');
+  o=o.replace(/&quot;([^&]*?)&quot;(\s*:)/g,'<span class="tokk">&quot;$1&quot;</span>$2');
+  o=o.replace(/(:\s*)&quot;([^]*?)&quot;/g,'$1<span class="toks">&quot;$2&quot;</span>');
+  o=o.replace(/(:\s*)(-?\d+\.?\d*)/g,'$1<span class="tokn">$2</span>');
+  o=o.replace(/(:\s*)(true|false|null|True|False|None)/g,'$1<span class="tokb">$2</span>');
+  return o;
+}
+
+const V={brief:'--brief',draft:'--draft',sup:'--sup',research:'--research',eval:'--eval',redteam:'--redteam',final:'--final'};
+
+/* ---------- node data (fields = [field, type, desc]) ---------- */
+const NODES={
+  write_research_brief:{color:V.brief,kk:'top · node',title:'write_research_brief',file:'draft_agent.py',
+    desc:'用户对话历史 → 结构化研究简报',
+    role:'读取用户 <span class="accent">messages</span>，用 <code>with_structured_output(ResearchQuestion)</code> 生成一段研究简报，<code>Command(goto="write_draft_report")</code> 写回 <code>research_brief</code>。',
+    fin:[['messages','list[BaseMessage]','用户原始提问']],
+    fout:[['research_brief','str','结构化研究方向']],
+    inCode:`{
+  "messages": [
+    { "type": "human",
+      "content": "帮我写一个关于英伟达最新GPU的调研报告" }
+  ]
+}`,
+    outCode:`// Command(goto="write_draft_report")
+{
+  "research_brief": "系统调研 NVIDIA 截至 2026-03 的最新 GPU：覆盖\\n(1) 数据中心 Blackwell (GB200/DGX B200)、\\n(2) 专业工作站 RTX PRO Blackwell、\\n(3) 消费级 GeForce RTX 50 与笔记本。\\n逐型号给出显存/带宽/TDP/发布时间,要求官方来源可核验、标注缺口。"
+}`},
+
+  write_draft_report:{color:V.draft,kk:'top · node',title:'write_draft_report',file:'draft_agent.py',
+    desc:'简报 → 可迭代的报告初稿',
+    role:'读取 <span class="accent">research_brief</span> 生成 Markdown 初稿；同时把初稿与简报塞入 <code>supervisor_messages</code>，作为 Supervisor 子图的启动上下文。',
+    fin:[['research_brief','str','上一节点的简报']],
+    fout:[['draft_report','str','Markdown 初稿'],['supervisor_messages','list[BaseMessage]','[初稿, 简报] 作为启动上下文']],
+    inCode:`{ "research_brief": "系统调研 NVIDIA 截至 2026-03 …（见上）" }`,
+    outCode:`{
+  "draft_report": "# 英伟达最新 GPU 调研报告(初稿)\\n## 1. 执行摘要（待补充官方数据）\\n## 2. 数据中心: Blackwell\\n## 3. 工作站: RTX PRO\\n## 4. 消费级: GeForce RTX 50\\n## 5. 待核验缺口",
+  "supervisor_messages": [
+    "Here is the draft report: # 英伟达最新 GPU …",
+    "系统调研 NVIDIA 截至 2026-03 的最新 GPU …"
+  ]
+}`},
+
+  supervisor_subgraph:{color:V.sup,kk:'top · subgraph',title:'supervisor_subgraph',file:'agent_builder.py',
+    desc:'编译后的 Supervisor 子图，嵌入顶层作为一个节点',
+    role:'把 <span class="accent">AgentState</span> 的 research_brief / draft_report / supervisor_messages 传入 <code>SupervisorState</code>；子图内循环研究、精修、评估、对抗，结束时把汇总 <code>notes</code> 回写顶层。见 ② 展开。',
+    fin:[['research_brief','str','研究方向'],['draft_report','str','待完善初稿'],['supervisor_messages','list[BaseMessage]','启动上下文']],
+    fout:[['notes','list[str]','各子 Agent 压缩后的研究笔记'],['draft_report','str','被精修后的草稿'],['raw_notes','list[str]','原始检索笔记']],
+    inCode:`{
+  "research_brief": "系统调研 NVIDIA … 最新 GPU …",
+  "draft_report": "# 英伟达最新 GPU 调研报告(初稿) …",
+  "supervisor_messages": [ "Here is the draft report: …", "…brief…" ]
+}`,
+    outCode:`// 子图 END 时回写顶层 AgentState
+{
+  "notes": [
+    "【数据中心】GB200 NVL72: 36 Grace + 72 Blackwell,机架级液冷…",
+    "【工作站】RTX PRO 6000 Blackwell: 96GB GDDR7…",
+    "【消费级】GeForce RTX 5070 Family / RTX 5050…"
+  ],
+  "draft_report": "# 英伟达最新 GPU 调研报告(精修 v2) …",
+  "raw_notes": [ "tavily: nvidia.com/gb200 …原文摘录…" ]
+}`},
+
+  final_report_generation:{color:V.final,kk:'top · node',title:'final_report_generation',file:'agent_builder.py',
+    desc:'简报 + findings + 草稿 → 最终报告',
+    role:'把 <span class="accent">notes</span> 拼成 findings，连同 research_brief、draft_report 交给 writer 模型，生成最终深度报告 <code>final_report</code>。',
+    fin:[['notes','list[str]','findings = "\\n".join(notes)'],['research_brief','str','研究方向'],['draft_report','str','精修后的草稿']],
+    fout:[['final_report','str','最终 Markdown 报告'],['messages','list[BaseMessage]','["最终的报告: …"]']],
+    inCode:`{
+  "research_brief": "系统调研 NVIDIA … 最新 GPU …",
+  "notes": [ "【数据中心】GB200 …", "【工作站】RTX PRO …", "【消费级】RTX 5070 …" ],
+  "draft_report": "# 英伟达最新 GPU 调研报告(精修 v2) …"
+}`,
+    outCode:`{
+  "final_report": "# 英伟达(NVIDIA)截至 2026-03-20 的最新 GPU 调研报告\\n## 1. 执行摘要\\n## 2. 判定口径\\n## 3. 型号清单与规格对照表\\n  - GB200 NVL72 [1] / DGX B200 [3]\\n  - RTX PRO 6000 Blackwell 96GB GDDR7 [4]\\n  - GeForce RTX 5070 Family [6]\\n## 4. 信息缺口与待确认问题",
+  "messages": [ "最终的报告: # 英伟达(NVIDIA)截至 …" ]
+}`},
+
+  /* supervisor subgraph */
+  supervisor:{color:V.sup,kk:'sup · node',title:'supervisor',file:'supervisor.py',
+    desc:'决策：本轮调用哪个工具',
+    role:'装配系统提示 + <span class="accent">supervisor_messages</span>，动态注入未处理的 <code>active_critiques</code> 与 needs_quality_repair 提醒，让带工具的模型决定调用 ConductResearch / think_tool / refine_draft_report / ResearchComplete；<code>research_iterations += 1</code> 后 goto supervisor_tools。',
+    fin:[['supervisor_messages','list[BaseMessage]','协调对话历史'],['research_iterations','int','迭代计数'],['active_critiques','list[Critique]','红队未处理意见（注入提示）'],['needs_quality_repair','bool','低分修复标志']],
+    fout:[['supervisor_messages','list[BaseMessage]','[带 tool_calls 的 AIMessage]'],['research_iterations','int','+1'],['needs_quality_repair','bool','重置为 False']],
+    inCode:`{
+  "supervisor_messages": [ "Here is the draft report: …", "…brief…" ],
+  "research_iterations": 0,
+  "active_critiques": [],
+  "needs_quality_repair": false
+}`,
+    outCode:`// Command(goto="supervisor_tools")
+{
+  "supervisor_messages": [
+    { "type": "ai", "content": "",
+      "tool_calls": [
+        { "name": "ConductResearch", "id": "call_a1",
+          "args": { "research_topic": "NVIDIA 数据中心 Blackwell GB200/DGX B200 规格与发布时间" } },
+        { "name": "ConductResearch", "id": "call_a2",
+          "args": { "research_topic": "NVIDIA 消费级 GeForce RTX 50 系列与笔记本规格" } }
+        // …… 可并行至多 3 个
+      ] }
+  ],
+  "research_iterations": 1,
+  "needs_quality_repair": false
+}`},
+
+  supervisor_tools:{color:V.sup,kk:'sup · node',title:'supervisor_tools',file:'supervisor.py',
+    desc:'执行工具调用 / 判断是否结束',
+    role:'读取最近消息的 tool_calls 执行：<b>think_tool</b> 记录反思；<b>ConductResearch</b> 用 asyncio.gather 并行启动多个子 Agent，把 compressed_research 写成 ToolMessage、raw_notes 聚合；<b>refine_draft_report</b> 精修后立即调 Evaluator 打分、写 quality_history 并 goto red_team；命中 <b>ResearchComplete</b> 或迭代≥15 则回写 notes 并 END。',
+    fin:[['supervisor_messages','list[BaseMessage]','含 tool_calls 的最新消息'],['research_iterations','int','≥15 触发结束'],['research_brief','str','传给 refine 工具'],['draft_report','str','传给 refine 工具']],
+    fout:[['supervisor_messages','list[BaseMessage]','[ToolMessage × N]'],['raw_notes','list[str]','各子 Agent 原始笔记'],['draft_report','str','refine 后的新草稿'],['quality_history','list[QualityMetric]','本轮评分快照'],['needs_quality_repair','bool','avg<6.0 时 True'],['notes','list[str]','仅 END 时写入']],
+    inCode:`{
+  "supervisor_messages": [
+    { "type":"ai", "tool_calls":[
+      { "name":"ConductResearch","id":"call_a1",
+        "args":{"research_topic":"NVIDIA 数据中心 Blackwell GB200 …"} }
+      // …… 其余并行调用同理
+    ] } ],
+  "research_iterations": 1,
+  "research_brief": "系统调研 NVIDIA … 最新 GPU …",
+  "draft_report": "# 英伟达最新 GPU 调研报告(初稿) …"
+}`,
+    outCode:`// 分支A — 执行 ConductResearch,goto supervisor
+{
+  "supervisor_messages": [
+    { "type":"tool", "name":"ConductResearch", "tool_call_id":"call_a1",
+      "content":"【数据中心】GB200 NVL72: 36 Grace CPU + 72 Blackwell GPU…" }
+    // …… 每个子 Agent 一条 ToolMessage
+  ],
+  "raw_notes": [ "tavily(nvidia.com/gb200): …\\nthink: 还缺消费级" ]
+}
+
+// 分支B — refine → Evaluator → goto red_team
+{
+  "draft_report": "# 英伟达最新 GPU 调研报告(精修 v2) …",
+  "supervisor_messages": [
+    { "type":"tool","name":"refine_draft_report",
+      "content":"Draft Updated.\\nQuality Score: 7.33/10.\\nJudge Feedback: 消费级 TDP 缺来源" } ],
+  "quality_history": [ { "score":7.33, "feedback":"消费级 TDP 缺来源", "iteration":3 } ],
+  "needs_quality_repair": false
+}`},
+
+  red_team:{color:V.redteam,kk:'sup · node',title:'red_team',file:'red_team_agent.py',
+    desc:'对抗式挑刺：找逻辑/事实漏洞',
+    role:'读取 <span class="accent">draft_report</span> 与 research_brief，让红队模型找缺陷。若输出含 "PASS"、过短(&lt;20)或已达 3 次上限则返回 {}；否则生成 <code>Critique</code> 写入 <code>active_critiques</code>，并作为 SystemMessage 注入 supervisor_messages，之后 edge → supervisor。',
+    fin:[['draft_report','str','精修后的草稿（需≥50字）'],['research_brief','str','研究方向'],['critique_nums','int','已批评次数（<3）']],
+    fout:[['active_critiques','list[Critique]','[Critique(author, concern, addressed=False)]'],['critique_nums','int','+1'],['supervisor_messages','list[BaseMessage]','[SystemMessage("ADVERSARIAL FEEDBACK …")]']],
+    inCode:`{
+  "draft_report": "# 英伟达最新 GPU 调研报告(精修 v2) …",
+  "research_brief": "系统调研 NVIDIA … 最新 GPU …",
+  "critique_nums": 0
+}`,
+    outCode:`// 发现缺陷时
+{
+  "active_critiques": [
+    { "author": "Red Team Adversary",
+      "concern": "消费级 RTX 5070/5050 的 TDP 与上架时间缺官方逐条来源;GB200 单芯片与系统级口径混用,有过度概括风险。",
+      "addressed": false }
+  ],
+  "critique_nums": 1,
+  "supervisor_messages": [
+    { "type":"system", "content":"ADVERSARIAL FEEDBACK DETECTED: 消费级 RTX 5070/5050 的 TDP …" }
+  ]
+}
+// 若 PASS / 过短 / 达上限 → {} 空更新,直接回 supervisor`},
+
+  evaluator:{color:V.eval,kk:'sup · called-fn',title:'evaluate_draft_quality',file:'evaluator_agent.py',
+    desc:'LLM-as-Judge 多维度打分（非独立图节点）',
+    role:'不是独立 graph 节点，而是在 <code>supervisor_tools</code> 里 refine 之后被同步调用。以 <code>EvaluationResult</code> 结构化输出三维分数，取平均写入 quality_history；<span class="accent">avg &lt; 6.0</span> 时置 <code>needs_quality_repair=True</code>。',
+    fin:[['research_brief','str','评判基准'],['draft_report','str','refine 后的新草稿 new_draft']],
+    fout:[['comprehensiveness_score','int 0-10','覆盖度'],['accuracy_score','int 0-10','事实依据'],['coherence_score','int 0-10','逻辑/可读性'],['reason','str','反馈原因']],
+    inCode:`{
+  "research_brief": "系统调研 NVIDIA … 最新 GPU …",
+  "draft_report": "# 英伟达最新 GPU 调研报告(精修 v2) …"
+}`,
+    outCode:`// EvaluationResult (structured output)
+{
+  "comprehensiveness_score": 7,
+  "accuracy_score": 8,
+  "coherence_score": 7,
+  "reason": "结构清晰、数据中心覆盖到位;消费级 TDP 与部分上架时间缺官方逐条来源,建议补齐。"
+}
+// avg = (7+8+7)/3 = 7.33 ≥ 6.0 → 不触发 needs_quality_repair`},
+
+  /* research subgraph */
+  llm_call:{color:V.research,kk:'research · node',title:'llm_call',file:'research_agent.py',
+    desc:'ReAct 推理：决定搜索还是收尾',
+    role:'装配 RESEARCH_AGENT_PROMPT + <span class="accent">researcher_messages</span>，让研究模型输出下一步：调用 tavily_search / think_tool，或不再调工具（收尾）。结果追加进 researcher_messages。',
+    fin:[['researcher_messages','list[BaseMessage]','子 Agent 私有对话历史']],
+    fout:[['researcher_messages','list[BaseMessage]','[AIMessage（可能带 tool_calls）]']],
+    inCode:`{
+  "researcher_messages": [
+    { "type":"human",
+      "content":"NVIDIA 数据中心 Blackwell GB200/DGX B200 规格与发布时间" }
+  ]
+}`,
+    outCode:`{
+  "researcher_messages": [
+    { "type":"ai", "content":"",
+      "tool_calls": [
+        { "name":"tavily_search", "id":"call_s1",
+          "args":{ "query":"NVIDIA GB200 NVL72 specs official", "max_results":3 } }
+      ] }
+  ]
+}`},
+
+  tool_node:{color:V.research,kk:'research · node',title:'tool_node',file:'research_agent.py',
+    desc:'执行工具并回填结果，再回 llm_call',
+    role:'取最近消息的 tool_calls 逐个执行（tavily 搜索经去重/摘要/格式化，think 记录反思），结果包成 ToolMessage 追加回 researcher_messages，edge → llm_call 继续循环。',
+    fin:[['researcher_messages','list[BaseMessage]','末条消息的 tool_calls']],
+    fout:[['researcher_messages','list[BaseMessage]','[ToolMessage × N]']],
+    inCode:`{
+  "researcher_messages": [
+    "...",
+    { "type":"ai", "tool_calls":[
+      { "name":"tavily_search","id":"call_s1",
+        "args":{"query":"NVIDIA GB200 NVL72 specs official","max_results":3} } ] }
+  ]
+}`,
+    outCode:`{
+  "researcher_messages": [
+    { "type":"tool", "name":"tavily_search", "tool_call_id":"call_s1",
+      "content": "Source: NVIDIA GB200 NVL72 (nvidia.com)\\nSummary: 机架级液冷,36 Grace CPU + 72 Blackwell GPU。\\nKey excerpts: '…36 Grace CPUs and 72 Blackwell GPUs…'\\n\\nSource: NVIDIA DGX B200 …" }
+  ]
+}`},
+
+  compress_research:{color:V.research,kk:'research · node',title:'compress_research',file:'research_agent.py',
+    desc:'压缩为高价值摘要 + 保留原始笔记 → END',
+    role:'循环结束后，用 compress 模型把整段 <span class="accent">researcher_messages</span> 蒸馏成 <code>compressed_research</code>（回传 Supervisor 作 ToolMessage），并抽取 tool/ai 原文存入 <code>raw_notes</code>，输出 ResearcherOutputState。',
+    fin:[['researcher_messages','list[BaseMessage]','完整检索对话'],['research_topic','str','本次子任务主题']],
+    fout:[['compressed_research','str','高密度摘要 → Supervisor notes'],['raw_notes','list[str]','tool/ai 原文合并']],
+    inCode:`{
+  "research_topic": "NVIDIA 数据中心 Blackwell GB200/DGX B200 规格与发布时间",
+  "researcher_messages": [ "…human…", "…ai tool_calls…", "…tool: tavily 结果…", "…ai 汇总…" ]
+}`,
+    outCode:`// ResearcherOutputState
+{
+  "compressed_research": "【数据中心 · Blackwell】\\n- GB200 NVL72: 机架级液冷,36 Grace + 72 Blackwell,面向万亿参数训练/推理。\\n- DGX B200: 8×Blackwell 统一 AI 平台。\\n- GB200 Developer Kit: 官方标注 'Coming Later in 2026'。\\n来源: nvidia.com 官方页 [1][2][3]",
+  "raw_notes": [ "Source: NVIDIA GB200 NVL72 …\\nthink: 数据中心已覆盖" ]
+}`}
+};
+
+/* ---------- render vertical flows ---------- */
+function nodeCard(id){
+  const n=NODES[id];
+  return `<div class="vnode" data-id="${id}" style="border-left-color:var(${n.color})">
+    <span class="more"></span>
+    <div class="kk" style="color:var(${n.color})">${n.kk}</div>
+    <div class="tt">${n.title}</div>
+    <div class="dd">${n.desc}</div>
+  </div>`;
+}
+function conn(label){return `<div class="conn">${label?`<span class="cl">${label}</span>`:''}</div>`;}
+function term(t){return `<div class="term">${t}</div>`;}
+
+function renderVFlow(el, seq){
+  let h='';
+  seq.forEach((s,i)=>{
+    if(s.term) h+=term(s.term);
+    else if(s.node) h+=nodeCard(s.node);
+    if(i<seq.length-1) h+=conn(seq[i].to||'');
+  });
+  el.innerHTML=h;
+}
+renderVFlow(document.getElementById('flow-top'),[
+  {term:'START',to:''},{node:'write_research_brief',to:'edge'},
+  {node:'write_draft_report',to:'edge'},{node:'supervisor_subgraph',to:'edge'},
+  {node:'final_report_generation',to:'edge'},{term:'END'}
+]);
+renderVFlow(document.getElementById('flow-sup'),[
+  {term:'START',to:''},{node:'supervisor',to:'edge'},
+  {node:'supervisor_tools',to:'goto red_team'},{node:'red_team',to:'edge → supervisor'},
+  {node:'evaluator'}
+]);
+renderVFlow(document.getElementById('flow-res'),[
+  {node:'llm_call',to:'⇄ 循环'},{node:'tool_node',to:'不再调工具'},
+  {node:'compress_research',to:'edge'},{term:'END'}
+]);
+
+/* parallel fan */
+document.getElementById('fan-res').innerHTML=`
+  <div class="mini" data-id="llm_call"><div class="mk">researcher_agent</div><div class="mt">子 Agent · 数据中心</div></div>
+  <div class="mini" data-id="llm_call"><div class="mk">researcher_agent</div><div class="mt">子 Agent · 消费级</div></div>
+  <div class="mini ell">……</div>`;
+
+/* ---------- modal ---------- */
+const overlay=document.getElementById('overlay'), modal=document.getElementById('modal');
+function fieldTable(rows){
+  const body=rows.map(r=>`<tr>
+    <td class="f">${r[0]}</td>
+    <td class="ty">${r[1]}</td>
+    <td>${reducerBadge(r[0])}</td>
+    <td>${r[2]||''}</td></tr>`).join('');
+  return `<table class="st"><tr><th>字段</th><th>类型</th><th>reducer</th><th>说明</th></tr>${body}</table>`;
+}
+function openNode(id){
+  const n=NODES[id];
+  modal.innerHTML=`
+    <div class="mh">
+      <span class="chip" style="background:var(${n.color})"></span>
+      <h3>${n.title}</h3>
+      <span class="fp">${n.file}</span>
+      <span class="x" id="closex">×</span>
+    </div>
+    <div class="mb">
+      <div class="role">${n.role}</div>
+
+      <div class="io2">
+      <div class="blk">
+        <div class="bt"><span class="pin in">INPUT</span> 读取的 State</div>
+        ${fieldTable(n.fin)}
+        <div class="bt" style="margin-top:12px"><span class="sub">▸ 输入示例（示意数据）</span></div>
+        <pre class="code">${hl(n.inCode)}</pre>
+      </div>
+
+      <div class="blk">
+        <div class="bt"><span class="pin out">OUTPUT</span> 写回的 State</div>
+        ${fieldTable(n.fout)}
+        <div class="bt" style="margin-top:12px"><span class="sub">▸ 输出示例（示意数据）</span></div>
+        <pre class="code">${hl(n.outCode)}</pre>
+      </div>
+      </div>
+
+      <div class="redkey">
+        <h4>reducer 说明</h4>
+        <div class="rrow"><span class="rd msg">add_messages</span><span>消息列表专用 reducer：按 id 合并/追加，新消息 append 到历史。</span></div>
+        <div class="rrow"><span class="rd add">operator.add</span><span><code>Annotated[list, operator.add]</code>：并行/多轮的列表结果自动拼接合并（如 notes、raw_notes）。</span></div>
+        <div class="rrow"><span class="rd last">LastValue</span><span>默认行为：无 reducer，后一次写入直接覆盖旧值（如 research_brief、draft_report）。</span></div>
+        <div class="rrow"><span class="rd so">结构化输出</span><span>Pydantic 模型字段（with_structured_output），不是图状态，不参与 reduce。</span></div>
+      </div>
+    </div>`;
+  overlay.classList.add('open');
+  document.getElementById('closex').onclick=closeModal;
+}
+function closeModal(){overlay.classList.remove('open');}
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.querySelectorAll('[data-id]').forEach(el=>el.addEventListener('click',()=>openNode(el.dataset.id)));
+</script>
+</body>
+</html>

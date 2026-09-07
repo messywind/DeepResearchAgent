@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepResearchAgent · 循序学习与面试准备</title>
+<style>
+:root{color-scheme:dark;--bg:#0c131c;--panel:#15202d;--line:#2c3a4d;--text:#e9eef5;--muted:#adbdce;--accent:#86dcc2;--blue:#a3c7ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.75 system-ui,-apple-system,"PingFang SC",sans-serif}button,select{font:inherit;color:inherit}button{cursor:pointer;background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px 13px}button:hover{border-color:var(--accent)}button[aria-pressed=true]{background:#243e3c;border-color:var(--accent)}button:disabled{opacity:.4;cursor:default}:focus-visible{outline:3px solid var(--blue);outline-offset:3px}select{background:var(--panel);border:1px solid var(--line);padding:9px 12px;border-radius:8px;max-width:100%;min-width:0}h1{font-size:27px;line-height:1.4;margin:7px 0}h2{font-size:24px;line-height:1.5;margin:9px 0 14px}h3{font-size:16px;margin:0 0 7px}p{margin:8px 0}.muted{color:var(--muted)}.tag{font-size:12px;letter-spacing:1px;color:var(--accent)}header,main{max-width:1060px;margin:auto;padding:25px 30px}header{padding-bottom:8px}header p{color:var(--muted);margin:4px 0}nav{display:flex;gap:8px;flex-wrap:wrap}#chapters{margin:10px 0 15px}#chapter-goal{font-size:14px;color:var(--muted)}.course-bar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:20px 0 15px}.course-bar label{display:flex;gap:12px;align-items:center;min-width:0}.course-bar span{white-space:nowrap}.lesson{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:27px 30px}#node-name{font:12px/1.6 ui-monospace,monospace;color:var(--muted);overflow-wrap:anywhere}#takeaway{font-size:17px;max-width:800px}.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:20px}.flow button{font-size:13px;padding:6px 10px}.flow-arrow{color:var(--muted)}#flow-caption{font-size:12px;color:var(--muted);margin:8px 0 22px}.example{display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}.example p{font-size:14px;margin:6px 0}.example .label{font-size:12px;color:var(--accent)}.question-area{padding-top:22px}#question{font-size:18px;margin:6px 0 13px}details>summary{cursor:pointer;color:var(--blue);padding:10px 0;list-style-position:inside}#answer>summary{display:list-item}#answer .answer-section{padding:10px 0;max-width:830px}#answer p{font-size:14px}#answer h3{font-size:12px;color:var(--accent);letter-spacing:1px}#answer .avoid h3{color:#efc68a}.recall{padding-top:13px;margin-top:15px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}.paging{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:17px 0 24px}.paging button:last-child{background:#243e3c;border-color:var(--accent)}.secondary{border-top:1px solid var(--line)}.secondary>summary{font-size:14px;color:var(--muted)}.source{font:12px/1.7 ui-monospace,monospace;color:var(--blue);overflow-wrap:anywhere}.io-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.io-tabs button{font-size:13px}pre{padding:16px;background:#0a1019;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.75 ui-monospace,monospace;max-height:500px;overflow:auto;color:#d1e4fa}.small{font-size:12px;color:var(--muted)}.reference{margin:24px 0}.reference>summary{border-top:1px solid var(--line);color:var(--muted);padding:15px 0}.reference-content{padding:10px 0}.canvas-scroll{overflow:auto}.canvas{position:relative;width:670px;height:540px;margin:auto}.canvas svg{position:absolute;inset:0;width:670px;height:540px}.edge{fill:none;stroke:var(--muted);stroke-width:1.5}.invoke{stroke:#efc68a;stroke-dasharray:5 4}.edge-label{fill:var(--muted);font:12px system-ui}.node{position:absolute;width:210px;height:66px;text-align:left;background:var(--panel);padding:10px 13px;display:flex;flex-direction:column;justify-content:center}.node strong{font:12px/1.4 ui-monospace,monospace;overflow-wrap:anywhere}.node span{font-size:12px;color:var(--muted)}.node.helper{border-style:dashed}.terminal{width:100px;height:34px;text-align:center;align-items:center;border-radius:20px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}td:first-child{font-family:ui-monospace,monospace;color:var(--blue)}#graph-tabs{margin:15px 0}#trace-select{display:block;width:100%;margin:10px 0}footer{font-size:12px;color:var(--muted);padding:0 0 20px}@media(max-width:600px){header,main{padding:20px 16px}header{padding-bottom:0}h1{font-size:23px}h2{font-size:21px}.lesson{padding:20px 17px}.course-bar{align-items:start}.course-bar label{flex-direction:column;align-items:start;gap:5px;flex:1}.course-bar select{width:100%}.example{grid-template-columns:1fr;gap:5px}.example>.flow-arrow{transform:rotate(90deg);width:20px;text-align:center}.canvas{margin:0}#chapters{gap:6px}#chapters button{font-size:13px;padding:8px}#takeaway{font-size:16px}#question{font-size:16px}.flow{gap:6px}.flow button{font-size:12px}.paging{font-size:13px}.paging button{padding:9px 10px}}
+</style>
+</head>
+<body>
+<header><div class="tag">DEEP RESEARCH · 项目学习与社招准备</div><h1>每次弄懂一个问题</h1><p>先理解流程，再下钻源码，最后练习回答追问。</p></header>
+<main>
+<nav id="chapters" aria-label="学习章节"></nav><p id="chapter-goal"></p>
+<div class="course-bar"><label for="lesson-select"><span class="small">本章课程</span><select id="lesson-select"></select></label><span class="small" id="position"></span></div>
+<article class="lesson">
+<div class="tag" id="lesson-number"></div><h2 id="lesson-title" aria-live="polite"></h2><div id="node-name"></div><p id="takeaway"></p>
+<div class="flow" id="focus-flow" aria-label="当前流程位置"></div><p id="flow-caption"></p>
+<section class="example" aria-label="最小数据例子"><div><span class="label">输入 · 简化理解</span><p id="mini-input"></p></div><span class="flow-arrow" aria-hidden="true">→</span><div><span class="label">输出 · 简化理解</span><p id="mini-output"></p></div></section>
+<section class="question-area"><span class="tag">面试追问 · 先尝试自己回答</span><p id="question"></p>
+<details id="answer"><summary>展开回答思路与代码依据</summary><div class="answer-section"><h3>当前代码怎么做</h3><p id="actual"></p></div><div class="answer-section"><h3>权衡与改进建议 · 不代表已实现</h3><p id="improve"></p></div><div class="answer-section avoid"><h3>别这样回答</h3><p id="avoid"></p></div></details></section>
+<p class="recall">自测：<span id="recall"></span></p>
+<details id="source-detail" class="secondary"><summary>需要时再看：节点细节与源码位置</summary><p id="node-detail" class="small"></p><p class="source" id="source"></p></details>
+<details id="details-state" class="secondary"><summary>需要时再看：完整 State 输入 / 输出</summary><p class="small" id="state-label"></p><div class="io-tabs" id="io-tabs" aria-label="查看输入输出"></div><pre id="json"></pre><p class="small" id="merge-note"></p></details>
+</article>
+<div class="paging"><button type="button" id="course-prev">← 上一节</button><span class="small">理解后再进入下一节</span><button type="button" id="course-next">下一节 →</button></div>
+<details id="reference" class="reference"><summary>查阅区：完整流程图、22 步示例与 State 字段表</summary><div class="reference-content"><p class="small">第一次学习可以跳过。点击图中节点进入对应课程；实线表示路由，虚线表示内部调用。</p><nav id="graph-tabs" aria-label="完整图层"></nav><p class="small" id="graph-title"></p><div class="canvas-scroll"><div class="canvas" id="canvas" aria-label="完整可点击流程图"></div></div><p class="small" id="graph-note"></p>
+<details><summary>完整示例执行 · 22 步</summary><p class="small">两路并行研究按阅读顺序展开，不表示实际完成顺序。选择步骤后展开上方 State 面板，不会改变当前课程。</p><label for="trace-select" class="small">选择一次节点执行</label><select id="trace-select"></select></details>
+<details><summary>State 字段与 reducer</summary><div class="tablewrap"><table><thead><tr><th>字段</th><th>所属 State</th><th>合并方式</th><th>含义</th></tr></thead><tbody id="fields"></tbody></table></div></details></div></details>
+<footer>示例使用虚构 Atlas GPU 与合成数据，未调用模型。面试题按 Agent 工程常见考察方向设计，不代表特定公司的真实题库。回答依据本项目源码；改进建议、效果验证和个人贡献应分别说明。</footer>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), copy=x=>JSON.parse(JSON.stringify(x));
+const H=content=>({type:'human',content}), A=(content,tool_calls=[])=>({type:'ai',content,tool_calls}), T=(name,id,content)=>({type:'tool',name,tool_call_id:id,content}), call=(name,id,args={})=>({name,id,args,type:'tool_call'});
+const brief='比较 Atlas X 与 Atlas Y：核对显存容量，在相同模型、精度与批量条件下比较吞吐；分清规格和实测，给出有证据的采购建议。';
+const draft0='# 采购研究初稿\nAtlas X 与 Atlas Y 面向推理部署。需核实两者显存容量、吞吐测试条件和价格。暂不能直接判断哪款性价比更高；待补充来源、统一测试口径以及采购成本。';
+const topics=['核实虚构 GPU Atlas X 与 Atlas Y 的显存规格。分别查找产品规格，注明容量与来源；不要把显存容量直接等同于推理速度。','比较虚构 GPU Atlas X 与 Atlas Y 在相同 8B 模型、FP16、batch=8 条件下的推理吞吐。注明测试环境、单位和结论限制，避免跨条件比较。'];
+const results=['Atlas X：48 GB；Atlas Y：80 GB。来源：https://example.com/specs（合成资料）。显存更大不能直接证明推理更快。','同一 8B / FP16 / batch=8 合成基准：X=120 tokens/s，Y=180 tokens/s，Y 吞吐为 X 的 1.5 倍。来源：https://example.com/benchmark。仅适用于此测试条件。'];
+const draft1='# 采购研究修订稿\nAtlas X 显存 48 GB，Atlas Y 为 80 GB。相同 8B、FP16、batch=8 合成基准下，X 为 120 tokens/s，Y 为 180 tokens/s，提升 50%。来源：example.com/specs 和 example.com/benchmark。优先选择 Y，但尚未补充价格和功耗信息。';
+const draft2='# 采购研究修订稿 v2\nAtlas X：48 GB、120 tokens/s；Atlas Y：80 GB、180 tokens/s。吞吐仅比较相同 8B / FP16 / batch=8 合成测试，Y 提升 50%。来源：example.com/specs、example.com/benchmark。缺少价格和功耗，无法判断性价比；显存需求超过 48 GB 或该条件下吞吐优先时，可优先评估 Y，否则应结合实际工作负载与报价测试。';
+const nodes={
+write_research_brief:['主图 · AgentState','agents/draft_agent.py · write_research_brief','读取用户 messages，以 ResearchQuestion 结构化输出研究简报。返回 Command，更新 research_brief 并跳向 write_draft_report。'],
+write_draft_report:['主图 · AgentState','agents/draft_agent.py · write_draft_report','读取 research_brief 生成 Markdown 草稿，并把两条字符串写入 supervisor_messages。add_messages 将它们规范化为 HumanMessage；函数实际返回 dict。'],
+supervisor_subgraph:['主图 → SupervisorState','agent_builder.py · supervisor_subgraph','编译子图直接作为节点。输入 / 输出通过共享字段衔接；research_iterations、quality_history 等子图私有字段不会成为主图 AgentState 字段。'],
+final_report_generation:['主图 · AgentState','agent_builder.py · final_report_generation','把 notes 用换行拼成 findings，与 research_brief、draft_report、日期一起交给 writer。返回 final_report，并把“最终的报告: …”字符串写入 messages，按 add_messages 规则成为 HumanMessage。'],
+supervisor:['Supervisor · SupervisorState','agents/supervisor.py · supervisor','读取 supervisor_messages、未解决批评和质量修复标志，调用绑定工具的模型。每次 research_iterations + 1，清除已提醒的修复标志，并跳向 supervisor_tools。'],
+supervisor_tools:['Supervisor · SupervisorState','agents/supervisor.py · supervisor_tools','先检查退出条件；否则按 think → ConductResearch → refine 顺序执行。研究调用 asyncio.gather；修稿后同步评估，转 red_team；其他情况返回 supervisor。'],
+red_team:['Supervisor · SupervisorState','agents/red_team_agent.py · red_team_node','检查草稿与简报，发现问题就追加 Critique、递增 critique_nums 并注入 SystemMessage。返回空更新也会沿固定边回 supervisor。'],
+llm_call:['Researcher · 独立 ResearcherState','agents/research_agent.py · llm_call','只把 RESEARCH_AGENT_PROMPT 和当前 researcher_messages 发送给模型。should_continue 是条件边函数，不是节点：有 tool_calls 到 tool_node，否则到 compress_research。'],
+tool_node:['Researcher · 独立 ResearcherState','agents/research_agent.py · tool_node','串行执行最新 AIMessage 中的所有工具调用，按相同 tool_call_id 返回 ToolMessage。工具可为 tavily_search 或 think_tool，完成后回 llm_call。'],
+compress_research:['Researcher → ResearcherOutputState','agents/research_agent.py · compress_research','以消息历史和 research_topic 生成 compressed_research；筛选 AI 与 Tool 消息内容，用换行拼成 raw_notes 中的一个字符串，然后结束子图。'],
+evaluate:['普通函数 · 非 LangGraph 节点','agents/evaluator_agent.py · evaluate_draft_quality','输入 research_brief 和新草稿，返回 EvaluationResult。supervisor_tools 计算三个分数的平均值，再写 quality_history；函数自身不返回 State 更新。'],
+refine:['普通工具 · 非 LangGraph 节点','tools/tool.py · refine_draft_report','从进入 supervisor_tools 时的 state 注入 research_brief、findings、draft_report，调用 writer 返回新草稿字符串。'],
+search:['普通工具 · 非 LangGraph 节点','tools/tool.py · tavily_search','检索 → URL 去重 → 网页摘要 → 格式化文本。实际后端由 search_factory 配置；工具名称仍为 tavily_search。有 raw_content 才调用摘要模型，摘要失败时截取前 1000 字。'],
+think:['普通工具 · 非 LangGraph 节点','tools/tool.py · think_tool','仅返回 Reflection recorded: 加上传入的 reflection 文本，不额外调用模型。']
+};
+const steps=[];const main={messages:[H('比较 Atlas X 与 Atlas Y 的显存和推理吞吐，给出采购建议。')],supervisor_messages:[],raw_notes:[],notes:[]};
+const reducers=['messages','supervisor_messages','researcher_messages','raw_notes','notes','quality_history','active_critiques'];
+function merge(s,p){for(const [k,v]of Object.entries(p))s[k]=reducers.includes(k)?[...(s[k]||[]),...copy(v)]:copy(v);return s}
+function add(graph,node,label,state,patch,route,note='',raw=patch){const before=copy(state);merge(state,patch);steps.push({graph,node,label,input:before,patch:copy(raw),after:copy(state),route,note});}
+add('main','write_research_brief','01 · 用户问题 → 研究简报',main,{research_brief:brief},'write_draft_report');
+add('main','write_draft_report','02 · 研究简报 → 初稿',main,{research_brief:brief,draft_report:draft0,supervisor_messages:[H('Here is the draft report: '+draft0),H(brief)]},'supervisor_subgraph','输出页保留源码返回的字符串；合并页展示 add_messages 规范化结果。',{research_brief:brief,draft_report:draft0,supervisor_messages:['Here is the draft report: '+draft0,brief]});
+const parentBefore=copy(main), sup={research_brief:brief,draft_report:draft0,supervisor_messages:copy(main.supervisor_messages),raw_notes:[],notes:[],research_iterations:0,critique_nums:0,active_critiques:[],quality_history:[],needs_quality_repair:false};
+const tc=[call('ConductResearch','research_A',{research_topic:topics[0]}),call('ConductResearch','research_B',{research_topic:topics[1]})];
+add('sup','supervisor','03 · Supervisor 分派 A / B 两个主题',sup,{supervisor_messages:[A('',tc)],research_iterations:1,needs_quality_repair:false},'supervisor_tools');
+const researchStates=[];
+for(let i=0;i<2;i++){
+ const tag=i===0?'A':'B',r={research_topic:topics[i],researcher_messages:[H(topics[i])],raw_notes:[]};
+ add('research','llm_call',`研究 ${tag} · 规划搜索`,r,{researcher_messages:[A('',[call('tavily_search','search_'+tag,{query:i===0?'Atlas X Atlas Y memory specs':'Atlas X Atlas Y 8B FP16 batch 8 benchmark'})])]},'tool_node');
+ add('research','tool_node',`研究 ${tag} · 执行 tavily_search`,r,{researcher_messages:[T('tavily_search','search_'+tag,'Search results:\n\n--- SOURCE 1: '+(i===0?'产品规格':'同条件基准')+' ---\nURL: https://example.com/'+(i===0?'specs':'benchmark')+'\nSUMMARY:\n'+results[i])]},'llm_call');
+ add('research','llm_call',`研究 ${tag} · 证据足够，无工具调用`,r,{researcher_messages:[A(results[i])]},'compress_research');
+ add('research','compress_research',`研究 ${tag} · 压缩与输出`,r,{compressed_research:results[i],raw_notes:[r.researcher_messages.filter(m=>m.type==='ai'||m.type==='tool').map(m=>m.content).join('\n')]},'__end__','输出 schema 还包含 researcher_messages；父级仅取 compressed_research 和 raw_notes。');researchStates.push(r);
+}
+add('sup','supervisor_tools','04 · A / B 汇合，转换为 ToolMessage',sup,{supervisor_messages:results.map((r,i)=>T('ConductResearch',i===0?'research_A':'research_B',r)),raw_notes:researchStates.map(r=>r.raw_notes.join('\n'))},'supervisor','A / B 的 state 相互独立；父级不合并 researcher_messages。');
+add('sup','supervisor','05 · 决策修订草稿',sup,{supervisor_messages:[A('',[call('refine_draft_report','refine_1')])],research_iterations:2,needs_quality_repair:false},'supervisor_tools');
+const eval1={comprehensiveness_score:5,accuracy_score:6,coherence_score:4,reason:'缺少价格与功耗证据；采购结论过强。'};
+add('sup','supervisor_tools','06 · 修稿 + Evaluator：均分 5 / 10',sup,{draft_report:draft1,quality_history:[{score:5,feedback:eval1.reason,iteration:2}],needs_quality_repair:true,supervisor_messages:[T('refine_draft_report','refine_1','Draft Updated.\nQuality Score: 5.0/10.\nJudge Feedback: '+eval1.reason)],raw_notes:[]},'red_team','评分示例：(5 + 6 + 4) / 3 = 5 < 6，触发质量修复。');
+const concern='采购建议未考虑价格和功耗，不能由 50% 的吞吐提升直接推出性价比更高。应明确条件，并将最终建议改为有条件的评估。';
+add('sup','red_team','07 · 红队指出采购建议缺陷',sup,{active_critiques:[{author:'Red Team Adversary',concern,addressed:false}],critique_nums:1,supervisor_messages:[{type:'system',content:'ADVERSARIAL FEEDBACK DETECTED: '+concern}]},'supervisor');
+add('sup','supervisor','08 · 注入批评与质量提醒，再修订',sup,{supervisor_messages:[A('',[call('refine_draft_report','refine_2')])],research_iterations:3,needs_quality_repair:false},'supervisor_tools','动态提示仅用于这一次模型调用，不全部写回 state；标志被重置，但批评仍未标记 addressed。');
+add('sup','supervisor_tools','09 · 修稿 + Evaluator：均分 8 / 10',sup,{draft_report:draft2,quality_history:[{score:8,feedback:'明确同条件比较及价格缺失，建议有条件成立。',iteration:3}],supervisor_messages:[T('refine_draft_report','refine_2','Draft Updated.\nQuality Score: 8.0/10.\nJudge Feedback: 明确同条件比较及价格缺失，建议有条件成立。')],raw_notes:[]},'red_team');
+add('sup','red_team','10 · 红队输出 PASS，返回空更新',sup,{},'supervisor','示例模型输出 PASS；原 active_critiques 依然保留，源码不会自动清除。');
+add('sup','supervisor','11 · 宣告 ResearchComplete',sup,{supervisor_messages:[A('',[call('ResearchComplete','done')])],research_iterations:4,needs_quality_repair:false},'supervisor_tools');
+add('sup','supervisor_tools','12 · 收集所有 ToolMessage 内容并结束',sup,{notes:sup.supervisor_messages.filter(m=>m.type==='tool').map(m=>m.content),research_brief:brief},'__end__','本例 notes 有 4 项：两段研究摘要 + 两段修稿评分。ResearchComplete 本身不生成 ToolMessage。');
+// A readable shared-channel boundary projection: existing message IDs merge rather than duplicate.
+const boundary={research_brief:sup.research_brief,draft_report:sup.draft_report,supervisor_messages:copy(sup.supervisor_messages),raw_notes:copy(sup.raw_notes),notes:copy(sup.notes)};
+Object.assign(main,copy(boundary));steps.push({graph:'main',node:'supervisor_subgraph',label:'13 · Supervisor 子图输出回到主图',input:parentBefore,patch:boundary,after:copy(main),route:'final_report_generation',note:'此处输出为子图共享字段投影，不是普通节点的增量补丁。消息由 add_messages 按 ID 合并；私有评分和计数不暴露到主图。'});
+const final=draft2+'\n\n结论：容量与该基准下吞吐优先时评估 Y；性价比需要真实报价、功耗和目标负载数据后再判断。所有数值均为演示数据。';
+add('main','final_report_generation','14 · 生成最终报告',main,{final_report:final,messages:[H('最终的报告: '+final)]},'__end__','本节点读取 notes 而非 raw_notes；下面的 messages 字符串按源码展示。',{final_report:final,messages:['最终的报告: '+final]});
+const helpers={
+evaluate:{input:{research_brief:brief,draft_report:draft1},patch:eval1,after:{quality_history:[{score:5,feedback:eval1.reason,iteration:2}],needs_quality_repair:true},note:'“调用方处理”只展示 supervisor_tools 根据评分构造的相关更新。'},
+refine:{input:{research_brief:brief,findings:results.join('\n'),draft_report:draft0},patch:draft1,after:{draft_report:draft1}},
+search:{input:{query:'Atlas X Atlas Y memory specs'},patch:'Search results:\n\n--- SOURCE 1: 产品规格 ---\nURL: https://example.com/specs\nSUMMARY:\n'+results[0],after:T('tavily_search','search_A','Search results:\n\n--- SOURCE 1: 产品规格 ---\nURL: https://example.com/specs\nSUMMARY:\n'+results[0])},
+think:{input:{reflection:'已获得显存容量，但还缺同条件吞吐测试，需要继续研究。'},patch:'Reflection recorded: 已获得显存容量，但还缺同条件吞吐测试，需要继续研究。',after:T('think_tool','think_example','Reflection recorded: 已获得显存容量，但还缺同条件吞吐测试，需要继续研究。')}
+};
+const defs={
+main:{title:'主流程',sub:'AgentState · 编译入口 agent',note:'主图节点用实线连接；supervisor_subgraph 内部的循环在 Supervisor 图层展开。',nodes:[['start','START',285,15],['write_research_brief','生成研究简报',230,78],['write_draft_report','生成初稿',230,188],['supervisor_subgraph','进入 Supervisor 子图',230,298],['final_report_generation','生成最终报告',230,408],['end','END',285,497]],edges:[[335,49,335,78,''],[335,144,335,188,''],[335,254,335,298,''],[335,364,335,408,''],[335,474,335,497,'']]},
+sup:{title:'Supervisor',sub:'SupervisorState · 3 个图节点 + 内部工具调用',note:'supervisor_tools → red_team 是 Command 动态跳转。虽然返回类型标注未列出 red_team，运行代码会选择它。ConductResearch 在节点内部调用 Researcher 子图。',nodes:[['start','START',85,15],['supervisor','任务规划 / 反思',30,85],['supervisor_tools','工具执行与路由',30,230],['red_team','对抗性审查',30,410],['end','END',505,15],['research_link','Researcher × N',420,150],['refine','refine_draft_report',420,260],['evaluate','evaluate_draft_quality',420,360],['think','think_tool',420,460]],edges:[[135,49,135,85,''],[135,151,135,230,'Command'],[135,296,135,410,'修稿后'],[240,263,420,183,'ConductResearch','call'],[240,263,420,293,'修稿','call'],[525,326,525,360,'评估','call'],[240,280,420,493,'反思','call']],paths:[['M30 440 H12 V118 H30','回到 supervisor',15,360],['M240 250 H315 V118 H240','普通工具后',258,177],['M240 239 H555 V49','≥15 / 无调用 / 完成 / 异常',355,92]]},
+research:{title:'Researcher',sub:'ResearcherState → ResearcherOutputState · 每个主题独立实例',note:'should_continue 检查最新 AIMessage.tool_calls。tool_node 内多个工具调用串行执行；多个 Researcher 实例由 Supervisor 并行启动。',nodes:[['start','START',165,15],['llm_call','模型决策',110,95],['tool_node','执行搜索 / 反思',420,220],['compress_research','压缩研究',110,370],['end','END',165,480],['search','tavily_search',420,350]],edges:[[215,49,215,95,''],[320,128,525,220,'有 tool_calls'],[215,161,215,370,'无 tool_calls'],[215,436,215,480,''],[525,286,525,350,'工具调用','call']],paths:[['M630 253 H652 V128 H320','继续决策',538,109]]},
+draft:{title:'Draft 演示图',sub:'仅 draft_agent.py 的 __main__ 构建；生产主图直接复用函数',note:'没有实际注册 clarify 节点。write_draft_report 的旧类型注解写 Command[__end__]，但当前函数实际返回状态 dict。',nodes:[['start','START',285,35],['write_research_brief','生成研究简报',230,140],['write_draft_report','生成初稿',230,290],['end','END',285,440]],edges:[[335,69,335,140,''],[335,206,335,290,''],[335,356,335,440,'']]}
+};
+const fields=[
+['messages','AgentInputState / AgentState','add_messages','主图输入只接受 messages；最终报告消息也写入此字段。'],
+['research_brief','AgentState / SupervisorState','覆盖','用户问题转成研究约束与范围。'],
+['draft_report','AgentState / SupervisorState','覆盖','初稿 → 修稿 → 最终写作的参考。'],
+['final_report','AgentState','覆盖','最终 Markdown 报告；主图未设置 output_schema，输出不限此字段。'],
+['supervisor_messages','AgentState / SupervisorState','add_messages','规划、工具结果与红队消息；同 ID 更新，其他追加。'],
+['notes','AgentState / SupervisorState','operator.add','退出 Supervisor 时从所有 ToolMessage 提取内容。'],
+['raw_notes','AgentState / SupervisorState / ResearcherState / ResearcherOutputState','operator.add','研究子图 AI 与 Tool 消息正文，父级聚合。'],
+['research_iterations','SupervisorState','覆盖','每次 supervisor +1，工具节点检查 ≥15。'],
+['critique_nums','SupervisorState','覆盖','每次有效红队批评 +1，最多 3 次。'],
+['active_critiques','SupervisorState','operator.add','Critique {author, concern, addressed}；当前仅追加。'],
+['quality_history','SupervisorState','operator.add','QualityMetric {score, feedback, iteration}。'],
+['needs_quality_repair','SupervisorState','覆盖','均分 <6 置 true；supervisor 提醒后置 false。'],
+['researcher_messages','ResearcherState / ResearcherOutputState','add_messages','独立研究上下文，也在研究子图输出 schema 内。'],
+['research_topic','ResearcherState','覆盖','ConductResearch 参数；父级同时放入首条 HumanMessage。'],
+['compressed_research','ResearcherState / ResearcherOutputState','覆盖','父级包装为 ConductResearch 的 ToolMessage.content。'],
+['tool_call_iterations','ResearcherState','覆盖（未使用）','声明但未初始化、递增或用于路由限制。']];
+</script>
+<script src="langgraph-learning.js"></script>
+</body>
+</html>
