@@ -34,8 +34,203 @@ const lessons=[
  [4,'supervisor_subgraph','把项目讲成可验证的工程实践','社招回答要能从设计下钻到源码、失败场景和验证方法。','问题：复杂研究需要多主题证据、统一结论和质量反馈。','设计：固定主流程 + Supervisor 循环 + 独立 Researcher。','用两分钟讲这个项目，以及你最想改的三个地方。','先讲问题与职责划分，再沿一次具体调用说明 State 和 ToolMessage 如何流动，最后指出 gather 限流、异常结束和批评状态没有闭环。只把自己实际完成并验证的部分描述为个人贡献。','优先级可按风险排序：硬预算与错误隔离 → 证据和批评闭环 → 基线评估与成本优化。每项说清触发场景、修改位置、验证用例和观察指标。','如果只是学习或二次开发，应明确身份；不要编造生产规模、个人主导经历或量化收益。','不看答案，口述“为什么这样设计—代码怎么做—哪里会失败—怎么验证改进”。',20]
 ].map((v,i)=>({id:i,chapter:v[0],node:v[1],title:v[2],takeaway:v[3],input:v[4],output:v[5],question:v[6],actual:v[7],improve:v[8],avoid:v[9],recall:v[10],trace:v[11]}));
 
+// 这组内容来自用户导出的 LangSmith run，而不是教程里的合成 Atlas 示例。
+// 把它单独放在课程数据旁边，讲解时可以明确区分“真实观测”和“为了好懂而缩小的例子”。
+const langsmithRun={
+  userQuestion:'我是个 AI 产品经理，想系统了解 Agent Memory 的短期/长期记忆、技术路线取舍，以及哪些方向值得投入。',
+  supervisorMessages:31,
+  researcherBatches:[
+    '第一批 3 个并行主题：高级技术实现；工程落地与成熟度；未来演进与行业布局。',
+    '第二批 1 个补充主题：向量 / 图谱 / 混合路线对比，记忆一致性与幻觉控制。',
+    '第三批 1 个补充主题：面向产品经理的实施步骤与决策框架。'
+  ],
+  refinementScores:['8.67/10','8.0/10','8.67/10'],
+  final:'最终报告约 3.7 万字；draft_report 约 5.7 万字；outputs 含 7 个字段。'
+};
+
+const followupBank={
+  write_research_brief:[
+    ['这次 run 的 research_brief 具体解决了什么问题？','它把“想了解 Memory”拆成架构分类、技术路线、路线取舍、工程落地、未来演进五块。这样 Supervisor 后面派任务时有边界，Evaluator 也有检查清单。'],
+    ['如果简报写错了，后面会发生什么？','错误会一路传到拆题、研究和最终写作，因为当前代码没有单独的简报质量校验。面试时可以说：给简报加结构化字段和必填项检查，关键范围缺失就先停下来。']
+  ],
+  write_draft_report:[
+    ['为什么先生成草稿再查资料？','草稿先搭出报告骨架，Supervisor 可以围绕“缺哪几块”派任务；这次 run 就是先读旧草稿，再发现混合记忆、工程落地和未来趋势的缺口。风险是草稿会把模型带偏，所以要把它当待验证假设。'],
+    ['草稿会不会造成确认偏误？','会。改进方法是给每个结论标记“待验证”，同时安排反例或独立路线的研究，不要只让 Researcher 找支持材料。']
+  ],
+  supervisor:[
+    ['这次 Supervisor 为什么先调用 think_tool？','真实 trace 里它先把旧草稿已经覆盖和缺失的部分列出来，再决定怎么补。think_tool 本身不思考，只是把模型写出的计划原样记录下来，真正的判断发生在 Supervisor 模型里。'],
+    ['Supervisor 和 supervisor_tools 的边界是什么？','Supervisor 只做“选什么工具、下一步去哪”；supervisor_tools 才执行工具、启动 Researcher、修稿、评分并准备下一轮 State。把两者拆开后，路由和副作用更容易观测。'],
+    ['一次调用多个 ConductResearch，结果怎么回到 Supervisor？','每个 Researcher 返回 compressed_research，父节点用原 tool_call_id 包成 ToolMessage，再追加到 supervisor_messages。这样下一次模型能知道每段结果对应哪个研究任务。']
+  ],
+  supervisor_tools:[
+    ['真实 run 里的 3 个 Researcher 是怎么并发的？','代码把 3 个 researcher_agent.ainvoke 放进协程列表，交给 asyncio.gather 一起等待；gather 返回顺序跟输入顺序一致。当前没有 Semaphore，所以“最多 3 个”主要是提示词约束，不是硬限流。'],
+    ['为什么第一次 8.67 分还不结束？','第一次评分认为五个维度基本覆盖，但指出技术路线的横向比较还不够突出。模型根据这条反馈又发起一次 ConductResearch，说明当前系统是“模型决定是否继续”，不是确定性质量门禁。'],
+    ['3 次评分分别说明了什么？','真实 run 的分数是 8.67、8.0、8.67；它们反映 Evaluator 对覆盖、准确性、一致性的主观判断，不是准确率。第二次下降还暴露出来源可核验性和可读性问题。'],
+    ['为什么最后一次修稿可能没看到同轮研究结果？','supervisor_tools 读取 findings 时用的是进入节点时的 state.supervisor_messages；本轮刚拿到的结果只在局部 tool_messages，返回 Command 后才写回。要修复就合并“旧消息 + 本轮结果”再生成 findings，或拆成两个节点。'],
+    ['ResearchComplete 触发后还会执行同一条消息里的其他工具吗？','不会。代码先判断是否包含 ResearchComplete，只要命中就直接 END，其他 ConductResearch 或修稿调用也会被跳过。生产上应避免模型在同一条消息里混放互相冲突的结束和工作指令。'],
+    ['一个 Researcher 失败，成功的两个结果会保留吗？','当前实现不保证：asyncio.gather 的异常会进入外层 catch，尚未合并的本轮结果可能丢失，然后子图直接结束。更稳的做法是逐任务返回 success/error，保留成功结果，只对可重试错误单独重试。'],
+    ['quality_history 为什么用追加？有什么坑？','它用 operator.add 记录每一轮分数，方便画出 8.67 → 8.0 → 8.67 的变化；但追加不去重，重试可能产生重复记录。生产要用 run_id、iteration 和版本号做幂等键。'],
+    ['active_critiques 什么时候算解决？','当前代码没有把 addressed 改成 true 的路径，红队返回 PASS 也不会清掉旧批评。面试时应指出这个闭环缺口：批评需要稳定 ID、修复证据和复核结果。']
+  ],
+  red_team:[
+    ['Evaluator 和 Red Team 有什么区别？','Evaluator 给综合性、准确性、一致性打分；Red Team 直接挑论证漏洞。真实 run 里主要看到 Evaluator 的评分和理由，Red Team 机制在源码里存在，但这份导出的消息没有单独出现红队节点。'],
+    ['红队返回 PASS 就代表可以上线吗？','不代表。PASS 只是模型没有输出超过阈值的批评，不能替代引用核验、事实校验和回归测试。']
+  ],
+  final_report_generation:[
+    ['最终报告为什么会比 draft_report 短？','draft_report 约 56,666 个字符，最终报告约 37,450 个字符，说明最后写作阶段做了整理和压缩。长度变短不等于质量变高，还要看引用保留和关键结论是否完整。']
+  ]
+};
+
+// 真实运行里最值得学习的几个 Supervisor 片段，直接覆盖课程中的示例文案。
+Object.assign(lessons.find(x=>x.id===2),{
+  input:'真实输入：已有一份 Memory 调研草稿，但缺高级实现、工程落地和未来趋势。',
+  output:'Supervisor 一次提出 3 个 ConductResearch，三个主题可以互不等待。',
+  question:'这次为什么能一次派 3 个 Researcher？',
+  actual:'真实 run 里第一轮确实出现 3 个 ConductResearch；supervisor_tools 用 asyncio.gather 等它们回来，再把 3 个结果包装成 ToolMessage。',
+  improve:'面试时补一句：代码把并发上限 3 写进提示词，但没有用 Semaphore 真正限流。',
+  recall:'说出这 3 个主题分别是什么。'
+});
+Object.assign(lessons.find(x=>x.id===10),{
+  input:'真实 run：Supervisor 看到旧草稿，先指出“混合记忆、工程落地、未来趋势”这些缺口。',
+  output:'它先调用 think_tool，再决定一次派 3 个 ConductResearch。',
+  question:'Supervisor 到底是在“思考”，还是在“执行”？',
+  actual:'真实 run 里 supervisor 只负责选工具和下一步；真正执行搜索、等待子 Agent、修稿和评分的是 supervisor_tools。',
+  improve:'面试时用一句话区分：Supervisor 做决定，工具节点干活。',
+  recall:'第一轮为什么是 3 个研究任务，而不是 1 个大任务？'
+});
+Object.assign(lessons.find(x=>x.id===12),{
+  input:'真实 run 第一轮：3 个 ConductResearch 同时启动。',
+  output:'3 个长摘要回来后，Supervisor 再继续下一轮。',
+  question:'并行的收益和代价是什么？',
+  actual:'互不依赖的三个主题可以一起跑，省等待时间；代价是更多调用和更大的上下文。',
+  improve:'代码还没有真正用 Semaphore 限流，提示词里的“最多 3 个”不是硬限制。',
+  recall:'如果一次返回 5 个 ConductResearch，当前代码会怎么做？'
+});
+Object.assign(lessons.find(x=>x.id===0),{
+  input:'真实输入：一名 AI 产品经理想了解 Agent Memory 的短期 / 长期记忆和投入方向。',
+  output:'research_brief：拆成 5 个方向，明确要查架构、技术取舍、落地、评测和未来趋势。',
+  question:'为什么先写 research_brief？',
+  actual:'这次 run 的简报把一个大问题拆成五块，后面 Supervisor 才知道该派哪些研究任务。',
+  improve:'面试时说清楚：简报是计划，不是最终结论。',
+  recall:'真实 run 的简报要求了哪五个研究方向？'
+});
+Object.assign(lessons.find(x=>x.id===1),{
+  input:'真实输入：先有一份约 4,216 字符的旧草稿，里面已经有 Memory 架构和技术路线的初步内容。',
+  output:'草稿被放进 supervisor_messages，后面 Supervisor 先找缺口再派任务。',
+  question:'为什么已经有草稿，还要再研究？',
+  actual:'真实 run 里 Supervisor 先指出草稿缺少混合记忆、工程落地和未来趋势，再派 3 个研究 Agent 补齐。',
+  improve:'一句话回答：草稿负责搭骨架，研究负责补证据和找反例。',
+  recall:'这次第一轮研究补了哪三个大缺口？'
+});
+Object.assign(lessons.find(x=>x.id===10),{
+  input:'真实 run：3 个研究结果已经回来了，下一步要把它们塞回草稿。',
+  output:'3 个 ConductResearch 结果分别是 18,870、36,339、21,187 字符的长摘要。',
+  question:'为什么研究结果要先变成 ToolMessage？',
+  actual:'Supervisor 用原来的 tool_call_id 把每个 compressed_research 包成 ToolMessage，这样下一次模型调用能把“哪个任务的结果”对上。',
+  improve:'如果结果很长，生产上还要做截断、引用保留和失败标记，不能只把字符串越堆越大。',
+  recall:'3 个并行主题分别研究了什么？'
+});
+Object.assign(lessons.find(x=>x.id===13),{
+  input:'真实 run 的第一次修稿后，Evaluator 给了 8.67/10，并指出技术路线横向对比还不够突出。',
+  output:'Supervisor 没有立刻结束，而是又发起一轮“补对比数据”的研究。',
+  question:'评分已经 8.67，为什么还要继续搜？',
+  actual:'这次 run 里模型读到评语后，认为“向量 / 图谱 / 混合方案的准确性、召回、延迟、成本对比”还可以更完整，于是又调用 ConductResearch。',
+  improve:'真实项目里要把“必须补齐的门槛”写成确定性规则，别完全依赖模型自己判断要不要继续。',
+  recall:'8.67 分说明什么？它能证明事实都对吗？'
+});
+Object.assign(lessons.find(x=>x.id===14),{
+  input:'真实 run：第二轮补充研究后，Evaluator 给 8.0/10，并担心部分 2026 来源难以核验。',
+  output:'模型继续做了一轮产品经理实施框架研究，再次修稿得到 8.67/10。',
+  question:'Evaluator 说“来源可能核验不了”，系统怎么处理？',
+  actual:'这次代码只把 reason 放进 ToolMessage，让 Supervisor 自己决定下一步；没有自动验证 URL，也没有硬性阻止报告结束。',
+  improve:'加来源校验、引用覆盖率和不可核验来源标记；关键事实低于门槛时走确定性返工。',
+  recall:'这次 run 一共修稿几次？分数是多少？'
+});
+Object.assign(lessons.find(x=>x.id===15),{
+  input:'真实 run：最后一次 think_tool 认为五个维度都覆盖，随后调用 ResearchComplete。',
+  output:'supervisor_tools 看到 ResearchComplete，提取历史 ToolMessage，进入最终写作。',
+  question:'ResearchComplete 是“模型说结束”还是代码保证质量？',
+  actual:'它只是一个工具调用信号。代码看到它就结束 Supervisor 子图；这次运行没有额外的确定性质量门禁。',
+  improve:'保留 ResearchComplete，同时加硬门槛：引用覆盖、关键事实核验、费用 / 时长预算和失败任务检查。',
+  recall:'为什么 8.67 分仍不能等于“报告正确”？'
+});
+lessons.push({
+  id:lessons.length,chapter:4,node:'supervisor_tools',title:'把这次真实运行讲成面试答案',
+  takeaway:'面试官更关心你能不能把一次真实 trace 讲清楚，而不是背定义。',
+  input:'问题：一次 Memory 调研为什么要经过多轮研究、修稿和评分？',
+  output:'真实数据：3 个并行主题 → 3 次修稿；评分 8.67、8.0、8.67 → ResearchComplete。',
+  question:'请用两句话讲清这次运行。',
+  actual:'用户先生成简报和初稿；Supervisor 把缺口拆给 Researcher，汇总结果后修稿、打分，再根据评语补研究，最后结束。',
+  improve:'再补一句风险：并发上限、异常恢复和引用核验仍要工程化，否则“跑完”不等于“可靠”。',
+  avoid:'不要把 8.67 分说成准确率，也不要把一次成功 run 说成线上稳定性。',
+  recall:'你能在 30 秒内说出：这次 run 的用户问题、三批研究和三个分数吗？',trace:20
+});
+
+// 以课程标题定位，避免前面按数组序号扩展课程后发生错位。
+const byTitle=t=>lessons.find(x=>x.title===t);
+Object.assign(byTitle('先分清规划者和执行者'),{
+ input:'真实 run：Supervisor 先读旧草稿，列出缺口，再发起 3 个研究主题。',
+ output:'它先用 think_tool 记下计划，再交给 supervisor_tools 执行。',
+ question:'Supervisor 到底负责什么？',
+ actual:'真实 trace 里 supervisor 负责选择工具和下一步；supervisor_tools 才负责启动子 Agent、修稿、评分和更新状态。',
+ improve:'面试时说清边界：一个做决定，一个做执行。',
+ recall:'为什么不让每个 Researcher 自己决定全局任务？'
+});
+Object.assign(byTitle('Command 同时表达状态更新和跳转'),{
+ input:'真实 run：Supervisor 模型产出 tool_calls，同时要把 research_iterations 加 1。',
+ output:'Command 同时带 update 和 goto="supervisor_tools"。',
+ question:'Command 和普通条件边有什么区别？',
+ actual:'Command 一次写状态补丁、一次决定去哪个节点；Researcher 的条件边只负责根据 tool_calls 选路。',
+ improve:'如果路由规则能集中到一个地方，线上更容易排查；不要同时让静态边和 Command 指向不同目的地。',
+ recall:'这次真实 run 里 Command 改了哪些字段？'
+});
+Object.assign(byTitle('并发发生在 gather，限流却尚未落实'),{
+ input:'真实 run 第一轮：3 个 ConductResearch 同时启动。',
+ output:'三个结果回来后，Supervisor 才进入下一轮修稿。',
+ question:'代码真的保证最多 3 个并发吗？',
+ actual:'没有。3 只是写进提示词的数字，代码会把模型返回的全部任务交给 asyncio.gather，没有 Semaphore 或队列。',
+ improve:'生产环境应增加并发信号量、单任务超时和失败隔离，再用 p95 延迟和成功率验证。',
+ recall:'如果模型一次返回 5 个任务，当前实现会怎样？'
+});
+Object.assign(byTitle('同一批新研究，修稿看不到'),{
+ input:'真实 run：研究结果先回到 supervisor_tools 的局部变量。',
+ output:'本轮结果要等 Command 返回后，才会进入下一次 State。',
+ question:'为什么“代码先研究再修稿”不等于修稿能看到结果？',
+ actual:'因为 findings 读取的是进入节点时的 state.supervisor_messages，刚拿到的结果还在局部 tool_messages 里。',
+ improve:'把旧消息和本轮结果合并后再生成 findings，或干脆拆成研究节点和修稿节点。',
+ recall:'这属于执行顺序问题，还是 State 提交边界问题？'
+});
+Object.assign(byTitle('评分是反馈信号，不是正确性证明'),{
+ input:'真实 run：8.67 → 8.0 → 8.67，第二次评语担心部分来源难核验。',
+ output:'模型又补了一轮产品经理实施框架研究，最后结束。',
+ question:'为什么 8.67 分还不能说报告正确？',
+ actual:'Evaluator 只是 LLM 裁判，分数代表它对完整性、准确性、一致性的判断，不是事实正确率。',
+ improve:'关键事实应增加引用核验和确定性门槛，不能只靠平均分决定上线。',
+ recall:'这次三次评分分别是什么？'
+});
+Object.assign(byTitle('批评能注入，但“已解决”闭环不完整'),{
+ input:'源码设计：Red Team 发现问题后写入 Critique。',
+ output:'下一轮 Supervisor 会把未 addressed 的批评放进系统提示词。',
+ question:'Red Team 反馈什么时候算处理完？',
+ actual:'当前代码没有把 addressed 改成 true 的路径，PASS 也不会自动清掉旧批评。',
+ improve:'给批评加稳定 ID，记录修复证据和复核结果，确认后再标记解决。',
+ recall:'Evaluator 和 Red Team 的分工分别是什么？'
+});
+Object.assign(byTitle('停止条件要比“模型说完成”更可靠'),{
+ input:'真实 run：最后一条 AIMessage 调用 ResearchComplete。',
+ output:'supervisor_tools 提取历史 ToolMessage，生成 15 条 notes 后结束。',
+ question:'ResearchComplete 能保证报告质量吗？',
+ actual:'不能，它只是模型发出的结束信号；当前代码看到它就结束，没有自动核验引用或失败任务。',
+ improve:'加总时长、费用、引用覆盖和关键事实校验等硬门槛，再允许结束。',
+ recall:'达到 research_iterations=15 时，当前代码会先执行工具还是直接结束？'
+});
+
 let lessonIndex=0,currentGraph='main',selected=steps[0],view='patch';
 const $learn=id=>document.getElementById(id);
+function shortText(text,max=2){
+ const parts=String(text).split(/(?<=[。！？!?])\s*/).filter(Boolean);
+ return parts.slice(0,max).join(' ')+(parts.length>max?'':'');
+}
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
 function button(text,action){const b=element('button',text);b.type='button';b.onclick=action;return b}
 function svgElement(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);return e}
@@ -47,14 +242,29 @@ function showLesson(index){
  $learn('chapter-goal').textContent=c.goal;$learn('lesson-number').textContent=`第 ${l.chapter+1} 章 · 第 ${lessons.filter(x=>x.chapter===l.chapter).findIndex(x=>x.id===l.id)+1} 节`;
  $learn('lesson-title').textContent=l.title;$learn('takeaway').textContent=l.takeaway;
  $learn('node-name').textContent=l.node;$learn('mini-input').textContent=l.input;$learn('mini-output').textContent=l.output;
- $learn('question').textContent=l.question;$learn('actual').textContent=l.actual;$learn('improve').textContent=l.improve;$learn('avoid').textContent=l.avoid;$learn('recall').textContent=l.recall;
+ $learn('question').textContent=l.question;$learn('actual').textContent=shortText(l.actual,2);$learn('improve').textContent=shortText(l.improve,1);$learn('avoid').textContent=shortText(l.avoid,1);$learn('recall').textContent=l.recall;
  $learn('node-detail').textContent=nodes[l.node][2];$learn('source').textContent='deep_research/'+nodes[l.node][1];
  $learn('course-prev').disabled=lessonIndex===0;$learn('course-next').disabled=lessonIndex===lessons.length-1;
  $learn('course-next').textContent=lessonIndex===lessons.length-1?'已到最后一节':lessonIndex<lessons.length-1&&lessons[lessonIndex+1].chapter!==l.chapter?'下一章 →':'下一节 →';
  $learn('position').textContent=`${lessonIndex+1} / ${lessons.length} 节`;
  $learn('chapters').replaceChildren(...chapters.map((chapter,i)=>{const b=button(`${i+1}. ${chapter.name}`,()=>showLesson(lessons.findIndex(x=>x.chapter===i)));b.setAttribute('aria-pressed',l.chapter===i);return b}));
  $learn('lesson-select').replaceChildren(...lessons.filter(x=>x.chapter===l.chapter).map(x=>{const o=element('option',x.title);o.value=x.id;return o}));$learn('lesson-select').value=l.id;
- renderFocus(l);renderState();drawGraph();
+ renderFocus(l);renderState();renderBank(l);renderCase(l);drawGraph();
+}
+function renderCase(l){
+ const runStage=l.chapter===0?'输入与初稿':l.chapter===1?'State 传递':l.chapter===2?'Researcher 执行':l.chapter===3?'Supervisor 循环':'一次真实 run 的工程复盘';
+ const facts={
+  '输入与初稿':'真实 run 的用户问题是 Memory 调研；输出先有 953 字符 research_brief，再带着一份约 4,216 字符旧草稿进入 Supervisor。',
+  'State 传递':'最终 outputs 有 7 个字段；supervisor_messages 有 31 条，notes 有 15 条，raw_notes 有 5 条很长的原始记录。',
+  'Researcher 执行':'第一轮 3 个子任务并行返回，摘要长度约 18,870、36,339、21,187 字符；之后又补了两轮定向研究。',
+  'Supervisor 循环':'三次修稿评分是 8.67、8.0、8.67。第一轮评语说技术路线横向对比不够突出，第二轮又提醒部分 2026 来源难核验；最后模型调用 ResearchComplete，Supervisor 提取历史 ToolMessage 结束。',
+  '一次真实 run 的工程复盘':'这次确实跑通，但仍不能证明线上可靠：来源没有自动核验，异常恢复和并发硬限流也没有实现。'
+ };
+ $learn('case-state').textContent=`当前课程站点：${runStage}\n${facts[runStage]}`;
+}
+function renderBank(l){
+ const items=followupBank[l.node]||followupBank.supervisor_tools;
+ const box=$learn('bank-list');box.replaceChildren(...items.map(([q,a],i)=>{const d=document.createElement('details');d.className='bank-item';const s=document.createElement('summary');s.textContent=`追问 ${i+1}：${q}`;const label=element('div','面试回答','label');const p=element('p',a);d.append(s,label,p);return d}));
 }
 function renderFocus(l){
  const scopes=l.chapter===2?['llm_call','tool_node','compress_research']:l.chapter>=3?['supervisor','supervisor_tools','red_team']:['write_research_brief','write_draft_report','supervisor_subgraph','final_report_generation'];
