@@ -93,10 +93,25 @@ def _build_openai_kwargs(
         kwargs["timeout"] = timeout_seconds
         kwargs["request_timeout"] = timeout_seconds
 
-    # 模型参数（可选）
-    model_kwargs: Dict[str, Any] = {}
-    if model_kwargs:
-        kwargs["model_kwargs"] = model_kwargs
+    # 思考模式（DeepSeek-V4 等）：默认开启思考模式，但思考模式与强制 tool_choice
+    # （结构化输出 with_structured_output / 部分工具调用）不兼容，会返回
+    # 400 "Thinking mode does not support this tool_choice"。可在 config 的
+    # cognition.openai 下用 `thinking: disabled`（或 enabled）关闭/开启，
+    # 或直接提供 `extra_body` 字典做更细粒度覆盖。
+    extra_body: Dict[str, Any] = dict(api_cfg.get("extra_body") or {})
+    thinking = api_cfg.get("thinking")
+    if thinking is not None and "thinking" not in extra_body:
+        if isinstance(thinking, str):
+            extra_body["thinking"] = {"type": thinking}
+        elif isinstance(thinking, dict):
+            extra_body["thinking"] = thinking
+    if extra_body:
+        kwargs["extra_body"] = extra_body
+
+    # 思考强度（可选）：low/high/max
+    reasoning_effort = api_cfg.get("reasoning_effort")
+    if reasoning_effort is not None:
+        kwargs["reasoning_effort"] = reasoning_effort
 
     return kwargs
 
